@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+  </ItemGroup>
+
+  <!-- Exclude sample C# files from compilation - they are input for the compiler -->
+  <ItemGroup>
+    <Compile Remove="Samples/**/*.cs" />
+    <None Include="Samples/**/*.cs" />
+  </ItemGroup>
+
+</Project>

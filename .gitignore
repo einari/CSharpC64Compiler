@@ -1,0 +1,5 @@
+obj
+bin
+*.prg
+*.ir
+*.lst
