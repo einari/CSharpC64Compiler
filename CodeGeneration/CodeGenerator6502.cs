@@ -952,16 +952,14 @@ public class CodeGenerator6502
         {
             // Load string constant address into ZP_PTR1
             _asm.Comment($"Print: \"{strLit.Value}\"");
-            // We need to load the address - this requires fixup
-            // For now, use a direct approach
-            _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00, "Low byte (placeholder)");
-            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_PTR1);
-            _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00, "High byte (placeholder)");  
-            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_PTR1 + 1));
             
-            // Actually, let's generate proper code to load the string address
-            // The assembler will resolve the label
-            _asm.Label($"_print_{strLit.ConstantLabel}");
+            // Load low byte of string address
+            _asm.EmitLoadLabelLow(strLit.ConstantLabel!);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_PTR1);
+            
+            // Load high byte of string address
+            _asm.EmitLoadLabelHigh(strLit.ConstantLabel!);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_PTR1 + 1));
         }
         _asm.EmitLabel(Opcode.JSR, AddressingMode.Absolute, "_rt_print_string");
     }

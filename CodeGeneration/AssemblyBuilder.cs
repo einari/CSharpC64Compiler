@@ -74,6 +74,28 @@ public class AssemblyBuilder
     }
 
     /// <summary>
+    /// Emit LDA #&lt;label (low byte of label address)
+    /// </summary>
+    public AssemblyBuilder EmitLoadLabelLow(string label, string? comment = null)
+    {
+        var instr = new Instruction(Opcode.LDA, AddressingMode.Immediate, 0, label) { Comment = comment ?? $"#<{label}" };
+        _lines.Add(new AssemblyLine { Instruction = instr, Address = _currentAddress, UnresolvedLabel = label, LabelByte = LabelByteType.Low });
+        _currentAddress += instr.Size;
+        return this;
+    }
+
+    /// <summary>
+    /// Emit LDA #&gt;label (high byte of label address)
+    /// </summary>
+    public AssemblyBuilder EmitLoadLabelHigh(string label, string? comment = null)
+    {
+        var instr = new Instruction(Opcode.LDA, AddressingMode.Immediate, 0, label) { Comment = comment ?? $"#>{label}" };
+        _lines.Add(new AssemblyLine { Instruction = instr, Address = _currentAddress, UnresolvedLabel = label, LabelByte = LabelByteType.High });
+        _currentAddress += instr.Size;
+        return this;
+    }
+
+    /// <summary>
     /// Add raw bytes
     /// </summary>
     public AssemblyBuilder Bytes(params byte[] data)
@@ -240,6 +262,16 @@ public class AssemblyBuilder
                         }
                         operand = (ushort)(byte)offset;
                     }
+                    // For immediate mode with label, handle low/high byte
+                    else if (instr.AddressingMode == AddressingMode.Immediate)
+                    {
+                        operand = line.LabelByte switch
+                        {
+                            LabelByteType.Low => (ushort)(operand & 0xFF),
+                            LabelByteType.High => (ushort)((operand >> 8) & 0xFF),
+                            _ => operand
+                        };
+                    }
                 }
 
                 switch (instr.AddressingMode)
@@ -344,5 +376,13 @@ public class AssemblyBuilder
         public ushort? OrgAddress { get; set; }
         public int Address { get; set; }
         public string? UnresolvedLabel { get; set; }
+        public LabelByteType LabelByte { get; set; } = LabelByteType.Full;
+    }
+
+    private enum LabelByteType
+    {
+        Full,   // Use full 16-bit address
+        Low,    // Use only low byte
+        High    // Use only high byte
     }
 }
