@@ -29,6 +29,7 @@ public static class C64Constants
     public const ushort RDTIM = 0xFFDE;             // Read system clock
     public const ushort SETTIM = 0xFFDB;            // Set system clock
     public const ushort STOP = 0xFFE1;              // Check STOP key
+    public const ushort SCNKEY = 0xFF9F;            // Scan keyboard
     public const ushort CLRSCR = 0xE544;            // Clear screen (not KERNAL, but ROM routine)
     public const ushort SETLFS = 0xFFBA;            // Set logical file parameters
     public const ushort SETNAM = 0xFFBD;            // Set filename

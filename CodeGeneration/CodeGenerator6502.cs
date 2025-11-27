@@ -82,6 +82,9 @@ public class CodeGenerator6502
         _asm.Label("_start");
         _asm.Comment("Program entry point");
 
+        // Ensure interrupts are enabled (for keyboard scanning)
+        _asm.Emit(Opcode.CLI);
+        
         // Initialize software stack pointer
         _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
         _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_SP);
@@ -150,11 +153,25 @@ public class CodeGenerator6502
     {
         _asm.Blank();
         _asm.Label("_rt_getkey");
-        _asm.Comment("Wait for and return keypress in A");
+        _asm.Comment("Wait for keypress using direct CIA keyboard scan");
         
-        _asm.Label("_rt_getkey_loop");
-        _asm.Emit(Opcode.JSR, AddressingMode.Absolute, C64Constants.GETIN);
-        _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, "_rt_getkey_loop");
+        // Wait for ALL keys to be released first
+        _asm.Label("_rt_getkey_wait_release");
+        _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
+        _asm.Emit(Opcode.STA, AddressingMode.Absolute, 0xDC00, "Select all rows");
+        _asm.Emit(Opcode.LDA, AddressingMode.Absolute, 0xDC01, "Read columns");
+        _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0xFF, "All released?");
+        _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, "_rt_getkey_wait_release");
+        
+        // Now wait for ANY key to be pressed
+        _asm.Label("_rt_getkey_wait_press");
+        _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
+        _asm.Emit(Opcode.STA, AddressingMode.Absolute, 0xDC00, "Select all rows");
+        _asm.Emit(Opcode.LDA, AddressingMode.Absolute, 0xDC01, "Read columns");
+        _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0xFF, "Any pressed?");
+        _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, "_rt_getkey_wait_press");
+        
+        // Return (key code not important for now, just that a key was pressed)
         _asm.Emit(Opcode.RTS);
     }
 
