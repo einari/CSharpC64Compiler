@@ -1,4 +1,4 @@
-# RoslynC64Compiler
+# CSharpC64Compiler
 
 A C# to Commodore 64 compiler that uses Roslyn as the frontend to compile C# code down to executable 6502 machine code for the Commodore 64.
 
