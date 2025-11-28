@@ -785,39 +785,55 @@ public class CodeGenerator6502
                 break;
 
             case BinaryOperator.Equal:
+                // CMP sets Z flag if equal
                 _asm.Emit(Opcode.CMP, AddressingMode.ZeroPage, ZP_TEMP);
+                var eqTrueLabel = NewLabel("eq_true");
+                var eqDoneLabel = NewLabel("eq_done");
+                _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, eqTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
-                var eqLabel = NewLabel("eq");
-                _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, eqLabel);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, eqDoneLabel);
+                _asm.Label(eqTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
-                _asm.Label(eqLabel);
+                _asm.Label(eqDoneLabel);
                 break;
 
             case BinaryOperator.NotEqual:
+                // CMP sets Z flag if equal
                 _asm.Emit(Opcode.CMP, AddressingMode.ZeroPage, ZP_TEMP);
+                var neTrueLabel = NewLabel("ne_true");
+                var neDoneLabel = NewLabel("ne_done");
+                _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, neTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
-                var neLabel = NewLabel("ne");
-                _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, neLabel);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, neDoneLabel);
+                _asm.Label(neTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
-                _asm.Label(neLabel);
+                _asm.Label(neDoneLabel);
                 break;
 
             case BinaryOperator.LessThan:
+                // CMP sets C flag: C=0 if A < operand
                 _asm.Emit(Opcode.CMP, AddressingMode.ZeroPage, ZP_TEMP);
+                var ltTrueLabel = NewLabel("lt_true");
+                var ltDoneLabel = NewLabel("lt_done");
+                _asm.EmitLabel(Opcode.BCC, AddressingMode.Relative, ltTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
-                var ltLabel = NewLabel("lt");
-                _asm.EmitLabel(Opcode.BCS, AddressingMode.Relative, ltLabel);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, ltDoneLabel);
+                _asm.Label(ltTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
-                _asm.Label(ltLabel);
+                _asm.Label(ltDoneLabel);
                 break;
 
             case BinaryOperator.GreaterOrEqual:
+                // CMP sets C flag: C=1 if A >= operand
                 _asm.Emit(Opcode.CMP, AddressingMode.ZeroPage, ZP_TEMP);
+                var geTrueLabel = NewLabel("ge_true");
+                var geDoneLabel = NewLabel("ge_done");
+                _asm.EmitLabel(Opcode.BCS, AddressingMode.Relative, geTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
-                var geLabel = NewLabel("ge");
-                _asm.EmitLabel(Opcode.BCC, AddressingMode.Relative, geLabel);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, geDoneLabel);
+                _asm.Label(geTrueLabel);
                 _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
-                _asm.Label(geLabel);
+                _asm.Label(geDoneLabel);
                 break;
 
             case BinaryOperator.Multiply:
@@ -825,6 +841,37 @@ public class CodeGenerator6502
                 _asm.Emit(Opcode.LDX, AddressingMode.ZeroPage, ZP_TEMP);
                 _asm.EmitLabel(Opcode.JSR, AddressingMode.Absolute, "_rt_mul8");
                 _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_RESULT);
+                break;
+
+            case BinaryOperator.LogicalOr:
+                // Logical OR: result is 1 if either operand is non-zero
+                // A has left, ZP_TEMP has right
+                _asm.Emit(Opcode.ORA, AddressingMode.ZeroPage, ZP_TEMP);
+                var lorZeroLabel = NewLabel("lor_zero");
+                var lorDoneLabel = NewLabel("lor_done");
+                _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, lorZeroLabel);
+                _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, lorDoneLabel);
+                _asm.Label(lorZeroLabel);
+                _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
+                _asm.Label(lorDoneLabel);
+                break;
+
+            case BinaryOperator.LogicalAnd:
+                // Logical AND: result is 1 if both operands are non-zero
+                // A has left, ZP_TEMP has right
+                var landFalseLabel = NewLabel("land_false");
+                var landDoneLabel = NewLabel("land_done");
+                _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0x00);
+                _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, landFalseLabel);
+                _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_TEMP);
+                _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0x00);
+                _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, landFalseLabel);
+                _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x01);
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, landDoneLabel);
+                _asm.Label(landFalseLabel);
+                _asm.Emit(Opcode.LDA, AddressingMode.Immediate, 0x00);
+                _asm.Label(landDoneLabel);
                 break;
         }
     }
