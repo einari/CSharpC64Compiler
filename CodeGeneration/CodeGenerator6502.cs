@@ -52,9 +52,10 @@ public class CodeGenerator6502
             GenerateFunction(func);
         }
 
-        // Generate infinite loop at end (so program doesn't crash)
+        // Exit - return to BASIC
         _asm.Label("_exit");
-        _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, "_exit", "Infinite loop at exit");
+        _asm.Comment("Return to BASIC warm start (READY prompt)");
+        _asm.Emit(Opcode.JMP, AddressingMode.Absolute, C64Constants.BASIC_WARM);
 
         var machineCode = _asm.Assemble();
         var listing = _asm.ToAssemblyListing();
@@ -992,6 +993,11 @@ public class CodeGenerator6502
 
             case "C64_ClearScreen":
                 _asm.EmitLabel(Opcode.JSR, AddressingMode.Absolute, "_rt_clearscreen");
+                break;
+
+            case "C64_Exit":
+                _asm.Comment("Exit to BASIC");
+                _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, "_exit");
                 break;
 
             case "C64_Poke":

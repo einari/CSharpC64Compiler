@@ -43,5 +43,6 @@ class Program
         Console.WriteLine("DONE!");
         
         C64.GetKey();
+        C64.Exit();
     }
 }

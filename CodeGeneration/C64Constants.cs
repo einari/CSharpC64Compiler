@@ -24,6 +24,7 @@ public static class C64Constants
     public const ushort CHROUT = 0xFFD2;            // Output character to current device
     public const ushort CHRIN = 0xFFCF;             // Input character from current device
     public const ushort GETIN = 0xFFE4;             // Get character from keyboard buffer
+    public const ushort BASIC_WARM = 0xA474;        // BASIC warm start (return to READY prompt)
     public const ushort CLRCH = 0xFFCC;             // Clear I/O channels
     public const ushort PLOT = 0xFFF0;              // Set/read cursor position
     public const ushort RDTIM = 0xFFDE;             // Read system clock

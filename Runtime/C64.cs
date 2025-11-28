@@ -35,6 +35,11 @@ public static class C64
     /// </summary>
     public static void ClearScreen() { }
     
+    /// <summary>
+    /// Exit the program and return to BASIC prompt
+    /// </summary>
+    public static void Exit() { }
+    
     // === Input ===
     
     /// <summary>

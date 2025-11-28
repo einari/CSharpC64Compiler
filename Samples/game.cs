@@ -78,6 +78,7 @@ class Game
         C64.ClearScreen();
         Console.WriteLine("GAME OVER");
         Console.WriteLine("THANKS FOR PLAYING!");
+        C64.Exit();
     }
     
     static void DrawPlayer()

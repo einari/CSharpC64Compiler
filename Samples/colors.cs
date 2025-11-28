@@ -37,3 +37,4 @@ C64.SetBorderColor(C64.Colors.LightBlue);
 
 Console.WriteLine("DONE! PRESS ANY KEY");
 C64.GetKey();
+C64.Exit();

@@ -16,3 +16,4 @@ Console.WriteLine("PRESS ANY KEY...");
 
 // Wait for keypress (maps to KERNAL GETIN)
 Console.ReadKey();
+C64.Exit();
