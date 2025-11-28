@@ -291,6 +291,11 @@ public class CSharpToIrCompiler
         switch (statement)
         {
             case ExpressionStatementSyntax exprStmt:
+                // Handle assignment statements specially
+                if (exprStmt.Expression is AssignmentExpressionSyntax assignment)
+                {
+                    return VisitAssignmentStatement(assignment);
+                }
                 var expr = VisitExpression(exprStmt.Expression);
                 return expr != null ? new IrExpressionStatement { Expression = expr } : null;
 
@@ -842,6 +847,45 @@ public class CSharpToIrCompiler
             Right = right,
             Operator = BinaryOperator.Equal,  // Abuse Equal to mean assignment in expression context
             Type = left.Type
+        };
+    }
+
+    private IrAssignment VisitAssignmentStatement(AssignmentExpressionSyntax assignment)
+    {
+        var left = VisitExpression(assignment.Left)!;
+        var right = VisitExpression(assignment.Right)!;
+
+        // For compound assignments, create binary expression
+        BinaryOperator? compoundOp = assignment.Kind() switch
+        {
+            SyntaxKind.AddAssignmentExpression => BinaryOperator.Add,
+            SyntaxKind.SubtractAssignmentExpression => BinaryOperator.Subtract,
+            SyntaxKind.MultiplyAssignmentExpression => BinaryOperator.Multiply,
+            SyntaxKind.DivideAssignmentExpression => BinaryOperator.Divide,
+            SyntaxKind.ModuloAssignmentExpression => BinaryOperator.Modulo,
+            SyntaxKind.AndAssignmentExpression => BinaryOperator.And,
+            SyntaxKind.OrAssignmentExpression => BinaryOperator.Or,
+            SyntaxKind.ExclusiveOrAssignmentExpression => BinaryOperator.Xor,
+            SyntaxKind.LeftShiftAssignmentExpression => BinaryOperator.ShiftLeft,
+            SyntaxKind.RightShiftAssignmentExpression => BinaryOperator.ShiftRight,
+            _ => null
+        };
+
+        if (compoundOp.HasValue)
+        {
+            right = new IrBinaryExpression
+            {
+                Left = left,
+                Right = right,
+                Operator = compoundOp.Value,
+                Type = left.Type
+            };
+        }
+
+        return new IrAssignment
+        {
+            Target = left,
+            Value = right
         };
     }
 

@@ -299,13 +299,58 @@ public class CodeGenerator6502
         _asm.Comment($"=== Function: {func.Name} ===");
         _asm.Label(func.Label ?? $"_func_{func.Name.ToLowerInvariant()}");
 
-        // Function prologue - save frame pointer and set up new frame
-        // For simplicity, we're using a minimal calling convention
+        // Calculate total local variable space needed
+        int localsSize = 0;
+        foreach (var local in func.Locals)
+        {
+            localsSize = Math.Max(localsSize, local.StackOffset + local.Type.SizeInBytes());
+        }
+
+        // Function prologue - set up frame pointer for local variables
+        if (localsSize > 0)
+        {
+            // Save old frame pointer
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_FRAME);
+            _asm.Emit(Opcode.PHA);
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, (byte)(ZP_FRAME + 1));
+            _asm.Emit(Opcode.PHA);
+            
+            // Set frame pointer to software stack area: ZP_FRAME = ZP_SP (current stack pointer)
+            // Allocate space by subtracting from stack pointer
+            _asm.Emit(Opcode.SEC);
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_SP);
+            _asm.Emit(Opcode.SBC, AddressingMode.Immediate, (byte)localsSize);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_SP);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_FRAME);
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, (byte)(ZP_SP + 1));
+            _asm.Emit(Opcode.SBC, AddressingMode.Immediate, 0x00);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_SP + 1));
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_FRAME + 1));
+        }
 
         // Generate function body
         foreach (var stmt in func.Body.Statements)
         {
             GenerateStatement(stmt);
+        }
+
+        // Function epilogue
+        if (localsSize > 0)
+        {
+            // Restore stack pointer (deallocate locals)
+            _asm.Emit(Opcode.CLC);
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_SP);
+            _asm.Emit(Opcode.ADC, AddressingMode.Immediate, (byte)localsSize);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_SP);
+            _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, (byte)(ZP_SP + 1));
+            _asm.Emit(Opcode.ADC, AddressingMode.Immediate, 0x00);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_SP + 1));
+            
+            // Restore old frame pointer
+            _asm.Emit(Opcode.PLA);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_FRAME + 1));
+            _asm.Emit(Opcode.PLA);
+            _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_FRAME);
         }
 
         // Implicit return if void
