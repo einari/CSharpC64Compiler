@@ -6,8 +6,8 @@
 // Change colors: blue background, light blue border
 
 C64.ClearScreen();
-C64.Poke(53280, 0);  // Border = light blue
-C64.Poke(53281, 0);   // Background = blue
+C64.Poke(0xd020, 0);  // Border = light blue
+C64.Poke(0xd021, 0);   // Background = blue
 
 Console.WriteLine("HELLO, COMMODORE 64!");
 Console.WriteLine("THIS WAS WRITTEN IN C#");
