@@ -41,6 +41,7 @@ class Program
         Console.WriteLine("");
         Console.WriteLine("");
         Console.WriteLine("DONE!");
+        Console.WriteLine("Press any key to exit...");
         
         C64.GetKey();
         C64.Exit();
