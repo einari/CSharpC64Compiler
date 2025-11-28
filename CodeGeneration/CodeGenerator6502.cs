@@ -382,8 +382,12 @@ public class CodeGenerator6502
         GenerateExpression(ifStmt.Condition);
         
         // Branch to else/end if condition is false (A == 0)
+        // Use long jump pattern: BNE skip + JMP target to handle large blocks
         _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0x00);
-        _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, ifStmt.ElseBlock != null ? elseLabel : endLabel);
+        var skipLabel = NewLabel("if_skip");
+        _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, skipLabel);
+        _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, ifStmt.ElseBlock != null ? elseLabel : endLabel);
+        _asm.Label(skipLabel);
 
         // Generate then block
         foreach (var stmt in ifStmt.ThenBlock.Statements)
@@ -417,8 +421,12 @@ public class CodeGenerator6502
         
         // Generate condition
         GenerateExpression(whileStmt.Condition);
+        // Use long jump pattern: BNE skip + JMP target to handle large loop bodies
         _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0x00);
-        _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, endLabel);
+        var skipLabel = NewLabel("while_skip");
+        _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, skipLabel);
+        _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, endLabel);
+        _asm.Label(skipLabel);
 
         // Generate body
         foreach (var stmt in whileStmt.Body.Statements)
@@ -454,8 +462,12 @@ public class CodeGenerator6502
         if (forStmt.Condition != null)
         {
             GenerateExpression(forStmt.Condition);
+            // Use long jump pattern: BNE skip + JMP target to handle large loop bodies
             _asm.Emit(Opcode.CMP, AddressingMode.Immediate, 0x00);
-            _asm.EmitLabel(Opcode.BEQ, AddressingMode.Relative, endLabel);
+            var skipLabel = NewLabel("for_skip");
+            _asm.EmitLabel(Opcode.BNE, AddressingMode.Relative, skipLabel);
+            _asm.EmitLabel(Opcode.JMP, AddressingMode.Absolute, endLabel);
+            _asm.Label(skipLabel);
         }
 
         // Generate body
