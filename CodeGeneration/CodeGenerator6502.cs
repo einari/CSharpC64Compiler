@@ -897,16 +897,26 @@ public class CodeGenerator6502
                 if (call.Arguments.Count >= 2)
                 {
                     // Poke(address, value)
-                    GenerateExpression(call.Arguments[1]); // value in A
-                    _asm.Emit(Opcode.PHA);
-                    GenerateExpression(call.Arguments[0]); // address in ZP_RESULT
-                    _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_RESULT);
-                    _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_PTR1);
-                    _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, (byte)(ZP_RESULT + 1));
-                    _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_PTR1 + 1));
-                    _asm.Emit(Opcode.PLA);
-                    _asm.Emit(Opcode.LDY, AddressingMode.Immediate, 0x00);
-                    _asm.Emit(Opcode.STA, AddressingMode.IndirectY, ZP_PTR1);
+                    // Check if address is a literal constant for optimized absolute addressing
+                    if (call.Arguments[0] is IrLiteralExpression addrLit)
+                    {
+                        GenerateExpression(call.Arguments[1]); // value in A
+                        _asm.Emit(Opcode.STA, AddressingMode.Absolute, (ushort)Convert.ToInt32(addrLit.Value));
+                    }
+                    else
+                    {
+                        // Dynamic address - use indirect addressing
+                        GenerateExpression(call.Arguments[1]); // value in A
+                        _asm.Emit(Opcode.PHA);
+                        GenerateExpression(call.Arguments[0]); // address in ZP_RESULT
+                        _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, ZP_RESULT);
+                        _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, ZP_PTR1);
+                        _asm.Emit(Opcode.LDA, AddressingMode.ZeroPage, (byte)(ZP_RESULT + 1));
+                        _asm.Emit(Opcode.STA, AddressingMode.ZeroPage, (byte)(ZP_PTR1 + 1));
+                        _asm.Emit(Opcode.PLA);
+                        _asm.Emit(Opcode.LDY, AddressingMode.Immediate, 0x00);
+                        _asm.Emit(Opcode.STA, AddressingMode.IndirectY, ZP_PTR1);
+                    }
                 }
                 break;
 

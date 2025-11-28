@@ -2,6 +2,13 @@
 // Compile with: RoslynC64Compiler hello.cs
 
 // Simple "Hello World" - this compiles to a C64 PRG file!
+
+// Change colors: blue background, light blue border
+
+C64.ClearScreen();
+C64.Poke(53280, 0);  // Border = light blue
+C64.Poke(53281, 0);   // Background = blue
+
 Console.WriteLine("HELLO, COMMODORE 64!");
 Console.WriteLine("THIS WAS WRITTEN IN C#");
 Console.WriteLine("");
